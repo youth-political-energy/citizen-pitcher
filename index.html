@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>公民投手 - 核三延役挑戰賽！</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url('ball.png') no-repeat center center fixed;
+      background-size: cover;
+      text-align: center;
+      cursor: url('https://cdn-icons-png.flaticon.com/512/726/726476.png') 16 16, auto;
+    }
+    canvas {background: transparent; border: none; margin-top: 20px;}
+    #score, #timer { font-size: 20px; margin: 10px; }
+    #result { font-size: 24px; margin-top: 20px; font-weight: bold; }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 20px; }
+    #rules { font-size: 16px; margin: 15px; color: #333; }
+    a { text-decoration: none; color: #1a0dab; }
+  </style>
+</head>
+<body>
+  <h1>公民投手 - 核三延役挑戰賽！</h1>
+  <div id="rules">
+    🧢 遊戲規則：<br>
+    你是投手，畫面會出現「同意」與「不同意」標靶。<br>
+    點擊「同意」標靶可得 +10 分，點到「不同意」會扣 -10 分。<br>
+    時限 45 秒，看看你是否是優質公民投手！<br>
+    👉 <a href="https://www.facebook.com/profile.php?id=61578306011159" target="_blank">點我追蹤「青年政能量」粉絲專頁</a>
+  </div>
+  <div id="score">分數：0</div>
+  <div id="timer">剩餘時間：45</div>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
+  <div id="result"></div>
+  <button onclick="startGame()">開始 / 再玩一次</button>
+  <script>
+    function startGame() {
+      score = 0;
+      timeLeft = 45;
+      targets = [];
+      scoreEl.textContent = "分數：" + score;
+      timerEl.textContent = "剩餘時間：" + timeLeft;
+      resultEl.textContent = "";
+      gameInterval = setInterval(updateGame, 1000);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = "剩餘時間：" + timeLeft;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const timerEl = document.getElementById('timer');
+    const resultEl = document.getElementById('result');
+
+    let score = 0;
+    let timeLeft = 45;
+    let targets = [];
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function spawnTarget() {
+      const isAgree = Math.random() < 0.6;
+      const text = isAgree ? "✅同意" : "❌不同意";
+      const color = isAgree ? "blue" : "green";
+      const target = {
+        x: randomInt(50, 550),
+        y: randomInt(50, 350),
+        radius: 30,
+        text: text,
+        color: color,
+        isAgree: isAgree
+      };
+      targets.push(target);
+      if (targets.length > 5) targets.shift();
+    }
+
+    function drawTargets() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      targets.forEach(t => {
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+        ctx.fillStyle = t.color;
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(t.text, t.x, t.y + 5);
+      });
+    }
+
+    canvas.addEventListener('click', function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      targets.forEach((t, index) => {
+        const dx = t.x - mouseX;
+        const dy = t.y - mouseY;
+        if (Math.sqrt(dx * dx + dy * dy) < t.radius) {
+          if (t.isAgree) {
+            score += 10;
+          } else {
+            score -= 10;
+          }
+          scoreEl.textContent = "分數：" + score;
+          targets.splice(index, 1);
+        }
+      });
+    });
+
+    function updateGame() {
+      spawnTarget();
+      drawTargets();
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      canvas.removeEventListener('click', null);
+      let resultText = score >= 120 ? "你是優質公民投手！" :
+                       score >= 80 ? "你投得不錯，再加把勁！" :
+                       "立場不夠明確，再練練吧！";
+      resultEl.textContent = `總分：${score}｜${resultText}`;
+    }
+  </script>
+</body>
+</html>
